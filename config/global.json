@@ -1,0 +1,14 @@
+{
+  "global": {
+    "parseVersion": "1.4.2"
+  },
+  "applications": {
+    "WRD": {
+      "applicationId": "5UxktAbnKRHOhWjRAI76GLnbo8ex21ziAk15mLxA",
+      "masterKey": "V2xLW0kiseE1iB3yNRemd7oq8ghkVLA6MT0NIYXX"
+    },
+    "_default": {
+      "link": "WRD"
+    }
+  }
+}
