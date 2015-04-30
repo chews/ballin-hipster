@@ -4,7 +4,7 @@ Parse.Cloud.afterSave("Chat", function(request) {
     Parse.Cloud.httpRequest({
         method: 'POST',
         url: FIREBASE_URL + '/chat.json',
-        body: '"updated"'
+        body: '{"test":"complete"}'
     }).then(function(httpResponse) {
         console.log('Success!');
     },
