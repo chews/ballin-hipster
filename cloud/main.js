@@ -1,6 +1,6 @@
 var FIREBASE_URL = 'https://apis.firebaseio.com';
-Parse.Cloud.beforeSave("Chat", function(request){
-    if(request.object.get("name").toLowerCase() === "cia"){
+Parse.Cloud.beforeSave("Chat", function(request, response){
+    if(request.object.get("name") === "cia"){
         request.object.set("message", "redacted");
     }
     response.success();
