@@ -42,16 +42,18 @@ var UserItem = Parse.Object.extend("IgUser");
 
 
 // Attach request handlers to routes
-app.get('/test', function(req, res) {
+app.get('/user/:id', function(req, res) {
   // GET http://example.parseapp.com/test?message=hello
 	ig.searchUser({
-	q: 'otherchews',
+	q: req.params.id,
 	count: '1'
 	}).then(function(httpResponse) {
+
 		userid = httpResponse.data["data"][0]["id"]
 
         var userItem = new UserItem();
         userItem.set("userid", userid);
+
 
 		ig.getRecentMediaByUser(userid,{
 		count: '10'
@@ -59,13 +61,19 @@ app.get('/test', function(req, res) {
 			var images = httpResponse.data["data"];
 			var captions = [];
 			images.forEach(function(e){
-				captions.push({caption:e["caption"]["text"],image:e["images"]["standard_resolution"]["url"]})
-			});
+                if (e["caption"] != null)
+                {
+                    if (e["caption"]["text"] != null)
+                    {
+				        captions.push({caption:e["caption"]["text"],image:e["images"]["standard_resolution"]["url"]})
+			             
+                    }
+                }
+            });
 			userItem.set("captions",captions);
 			userItem.save(null, {
                 success: function(userItem) {
                    console.log("Success");
-
                 },
                 error: function(userItem, error) {
                     alert('Try another instagram account' + error.message);
