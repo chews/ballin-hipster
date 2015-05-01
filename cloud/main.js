@@ -13,6 +13,8 @@ Parse.Cloud.beforeSave("Chat", function(request, response){
     response.success();
 });
 
+
+
 Parse.Cloud.afterSave("Chat", function(request) {
     var jsn = request.object.get("message")
     console.log('=================================' + jsn)
@@ -38,6 +40,23 @@ app.use(express.bodyParser());    // Read the request body into a JS object
 
 var UserItem = Parse.Object.extend("IgUser");
 
+Parse.Cloud.beforeSave("IgUser", function(request, response){
+    var query = new Parse.Query(UserItem);
+    query.equalTo("userid",request.object.get("userid"));
+    query.first({
+        success: function(object)
+        {
+            if (object) {
+                response.error("A IgUser with this userid already exists");
+            } else {
+                response.success();
+            }
+        },
+        error: function(error) {
+            response.error("Could not validate for uniqueness");
+        }
+    });
+});
 
 // Attach request handlers to routes
 app.get('/user/:id', function(req, res) {
@@ -54,7 +73,7 @@ app.get('/user/:id', function(req, res) {
 
 
 		ig.getRecentMediaByUser(userid,{
-		count: '10'
+		count: '10' 
 		}).then(function(httpResponse) {
 			var images = httpResponse.data["data"];
 			var captions = [];
