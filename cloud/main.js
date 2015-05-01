@@ -14,10 +14,8 @@ Parse.Cloud.beforeSave("Chat", function(request, response){
 });
 
 Parse.Cloud.afterSave("Chat", function(request) {
-    console.log('==============1====================')
     var jsn = request.object.get("message")
-    console.log('==============2===================' + jsn)
-    console.log('==============3===================')
+    console.log('=================================' + jsn)
 
     Parse.Cloud.httpRequest({
         method: 'POST',
@@ -74,23 +72,8 @@ app.get('/user/:id', function(req, res) {
                             });
                         }
 
-                        // if (e["tags"] != null)
-                        // {
-                        //     ig_caption = e["caption"]["text"].toLowerCase();
-                        //     e["tags"].forEach(function(tag)
-                        //     {
-                        //         ig_caption = ig_caption.replace("#"+tag,"");
-                        //     });
-                        // }
 
-                        ig_caption = ig_caption.replace(".","");
-                        ig_caption = ig_caption.replace(",","");
-                        ig_caption = ig_caption.replace("!","");
-                        ig_caption = ig_caption.replace("?","");
-                        ig_caption = ig_caption.replace(";","");
-                        ig_caption = ig_caption.replace(":","");
-                        ig_caption = ig_caption.replace('"',"");
-                        ig_caption = ig_caption.replace("'","");
+                        ig_caption = ig_caption.replace(/[.,!?;:"']/g,"");
                         ig_caption = ig_caption.replace("  "," ");
 
                         ig_caption = ig_caption.split(" ");
@@ -104,8 +87,8 @@ app.get('/user/:id', function(req, res) {
                                 }
                             }
                         });
-				        captions.push({caption:ig_caption_new,hashs:e["tags"],image:e["images"]["standard_resolution"]["url"]})
-			             
+				        // captions.push({caption:ig_caption_new,hashs:e["tags"],image:e["images"]["standard_resolution"]["url"]})
+			            captions.push({caption:ig_caption_new,hashs:e["tags"]})
                     }
                 }
             });
