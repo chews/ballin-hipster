@@ -65,7 +65,26 @@ app.get('/user/:id', function(req, res) {
                 {
                     if (e["caption"]["text"] != null)
                     {
-				        captions.push({caption:e["caption"]["text"],image:e["images"]["standard_resolution"]["url"]})
+                        if (e["tags"] != null)
+                        {
+                            ig_caption = e["caption"]["text"].toLowerCase();
+                            e["tags"].forEach(function(tag)
+                            {
+                                ig_caption = ig_caption.replace("#"+tag,"");
+                            });
+                        }
+                        ig_caption = ig_caption.replace(".","");
+                        ig_caption = ig_caption.replace(",","");
+                        ig_caption = ig_caption.replace("!","");
+                        ig_caption = ig_caption.replace("?","");
+                        ig_caption = ig_caption.replace(";","");
+                        ig_caption = ig_caption.replace(":","");
+                        ig_caption = ig_caption.replace('"',"");
+                        ig_caption = ig_caption.replace("'","");
+                        ig_caption = ig_caption.replace("  "," ");
+
+                        ig_caption = ig_caption.split(" ");
+				        captions.push({caption:ig_caption,hashs:e["tags"],image:e["images"]["standard_resolution"]["url"]})
 			             
                     }
                 }
