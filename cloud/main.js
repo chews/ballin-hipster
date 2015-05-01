@@ -46,10 +46,14 @@ Parse.Cloud.beforeSave("IgUser", function(request, response){
     query.first({
         success: function(object)
         {
-            if (object) {
-                response.error("A IgUser with this userid already exists");
-            } else {
-                response.success();
+            if (object) 
+            {
+                object.destroy();
+                //object.set("captions", request.object.get("captions"));
+            }  
+            else 
+            {
+                request.object.save();
             }
         },
         error: function(error) {
@@ -121,8 +125,6 @@ app.get('/user/:id', function(req, res) {
                 }
             });
             res.send(captions);
-
-
 
 		},
 		function(error) {
