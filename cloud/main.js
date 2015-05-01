@@ -6,6 +6,12 @@ ig.initialize('e098fc55f76442deaf8057c0fcaeeb76');
 ig.setAccessToken('261345369.dc8bd7d.d743823297444ed1acc38b9b0e1f5ef2');
 
 var FIREBASE_URL = 'https://apis.firebaseio.com';
+Parse.Cloud.beforeSave("Chat", function(request, response){
+    if(request.object.get("name") === "cia"){
+        request.object.set("message", "redacted");
+    }
+    response.success();
+});
 
 Parse.Cloud.afterSave("Chat", function(request) {
     console.log('==============1====================')
