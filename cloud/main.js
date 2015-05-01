@@ -73,6 +73,16 @@ app.get('/user/:id', function(req, res) {
                                 ig_caption = ig_caption.replace("#"+tag,"");
                             });
                         }
+
+                        // if (e["tags"] != null)
+                        // {
+                        //     ig_caption = e["caption"]["text"].toLowerCase();
+                        //     e["tags"].forEach(function(tag)
+                        //     {
+                        //         ig_caption = ig_caption.replace("#"+tag,"");
+                        //     });
+                        // }
+
                         ig_caption = ig_caption.replace(".","");
                         ig_caption = ig_caption.replace(",","");
                         ig_caption = ig_caption.replace("!","");
@@ -85,12 +95,15 @@ app.get('/user/:id', function(req, res) {
 
                         ig_caption = ig_caption.split(" ");
                         ig_caption_new = [];
-                        ig_caption.forEach(function(element)){
-                            if (element.length > 3)
+                        ig_caption.forEach(function(ig_element){
+                            if (ig_element.length > 3)
                             {
-                                ig_caption_new.append(element);
+                                if (ig_element[0]!="@")
+                                {
+                                    ig_caption_new.push(ig_element);
+                                }
                             }
-                        })
+                        });
 				        captions.push({caption:ig_caption_new,hashs:e["tags"],image:e["images"]["standard_resolution"]["url"]})
 			             
                     }
