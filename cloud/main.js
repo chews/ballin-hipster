@@ -39,28 +39,40 @@ Parse.Cloud.afterSave("Chat", function(request) {
 app.use(express.bodyParser());    // Read the request body into a JS object
 
 var UserItem = Parse.Object.extend("IgUser");
+var WrdEntry = Parse.Object.extend("WrdEntry");
 
-Parse.Cloud.beforeSave("IgUser", function(request, response){
-    var query = new Parse.Query(UserItem);
-    query.equalTo("userid",request.object.get("userid"));
-    query.first({
-        success: function(object)
-        {
-            if (object) 
-            {
-                object.destroy();
-                //object.set("captions", request.object.get("captions"));
-            }  
-            else 
-            {
-                request.object.save();
-            }
-        },
-        error: function(error) {
-            response.error("Could not validate for uniqueness");
-        }
+
+function process_keys(captions, IgUser){
+    var query = new Parse.Query(WrdEntry);
+    query.containedIn("word",captions);
+    returnArr = []
+    query.each(function(obj){
+        returnArr.push(obj.id);
+        console.log(obj.id)
+    }).then(function(obj){
+        console.log("done")
     });
-});
+}
+
+// Parse.Cloud.afterSave("IgUser", function(request,response) {
+
+//     var posts = request.object.get("captions");
+
+
+//     posts.forEach(function(image)
+//     {
+//         if (i == posts.length-1){
+//             request.object.save();
+//         }
+
+
+//         image["wrdkey"] = process_keys(image["caption"]);
+
+//     });
+// });
+
+
+
 
 // Attach request handlers to routes
 app.get('/user/:id', function(req, res) {
@@ -69,19 +81,38 @@ app.get('/user/:id', function(req, res) {
 	q: req.params.id,
 	count: '1'
 	}).then(function(httpResponse) {
+        var userItem;
 
 		userid = httpResponse.data["data"][0]["id"]
 
-        var userItem = new UserItem();
-        userItem.set("userid", userid);
+        var query = new Parse.Query(UserItem);
+        query.equalTo("userid",userid);
+        query.first({
+            success: function(object)
+            {
+                if (typeof(object)=="undefined") // new object so we save it. 
+                {
+                    userItem = new UserItem();
+                    userItem.set("userid", userid);
+                }  
+                else 
+                {
+                    userItem = object;
+                }
+
+            },
+            error: function(error) {
+                console.log("no item found");
+            }
+        });
 
 
 		ig.getRecentMediaByUser(userid,{
-		count: '10' 
+		count: '10' //change count here 
 		}).then(function(httpResponse) {
-			var images = httpResponse.data["data"];
+			var posts = httpResponse.data["data"];
 			var captions = [];
-			images.forEach(function(e){
+			posts.forEach(function(e){
                 if (e["caption"] != null)
                 {
                     if (e["caption"]["text"] != null)
@@ -110,20 +141,24 @@ app.get('/user/:id', function(req, res) {
                                 }
                             }
                         });
+
+
 				        // captions.push({caption:ig_caption_new,hashs:e["tags"],image:e["images"]["standard_resolution"]["url"]})
-			            captions.push({caption:ig_caption_new,hashs:e["tags"]})
+			            captions.push({image:e["id"],caption:ig_caption_new,wordkeys:process_keys(ig_caption_new)});
                     }
                 }
             });
-			userItem.set("captions",captions);
-			userItem.save(null, {
+            userItem.set("captions",captions);
+            userItem.save(null, {
                 success: function(userItem) {
-                   console.log("Success");
+                    console.log("Success");
                 },
                 error: function(userItem, error) {
                     alert('Try another instagram account' + error.message);
                 }
             });
+
+
             res.send(captions);
 
 		},
