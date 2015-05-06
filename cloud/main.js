@@ -11,9 +11,7 @@ Parse.Cloud.beforeSave("Chat", function(request, response){
         request.object.set("message", "redacted");
     }
     response.success();
-});
-
-
+}); 
 
 // Parse.Cloud.afterSave("Chat", function(request) {
 //     var jsn = request.object.get("message")
@@ -126,29 +124,29 @@ app.get('/user/:id', function(req, res) {
                             }
                         });
 
-                      //Parse.Cloud.run("processKeys", {"captions":captions, "image":e["id"], "caption":ig_caption_new});
-                        var queryTwo = new Parse.Query(WrdEntry);
-                        queryTwo.containedIn("word",ig_caption_new);
-                        queryTwo.find({
-                          success: function(results) {
-                                captions.push({image:e["id"],caption:ig_caption_new,wordkeys:results});
-                                userItem.set("captions",captions);
-                                userItem.save(null, {
-                                    success: function(userItem) {
-                                        res.send(captions);
-                                        console.log("Success");
+                              //Parse.Cloud.run("processKeys", {"captions":captions, "image":e["id"], "caption":ig_caption_new});
+                                var processKeys = new Parse.Query(WrdEntry);
+                                processKeys.containedIn("word",ig_caption_new);
+                                processKeys.find({
+                                  success: function(results) {
+                                        console.log(results);
+                                        captions.push({image:e["id"],caption:ig_caption_new,wordkeys:results});
+                                        userItem.set("captions",captions);
+                                        userItem.save(null, {
+                                            success: function(userItem) {
+                                                res.send(captions);
+                                                console.log("Success");
+                                            },
+                                            error: function(userItem, error) {
+                                                alert('Try another instagram account' + error.message);
+                                            }
+                                        });
                                     },
-                                    error: function(userItem, error) {
-                                        alert('Try another instagram account' + error.message);
-                                    }
-                                });
-                            },
-                           error: function(error) {
-                             console.log(error);
+                                   error: function(error) {
+                                     console.log(error);
 
-                           }
-                        });
-                  
+                                   }
+                                });
                         // captions.push({caption:ig_caption_new,hashs:e["tags"],image:e["images"]["standard_resolution"]["url"]})
                      // captions.push({image:e["id"],caption:ig_caption_new,wordkeys:process_keys(ig_caption_new)});
                     }
