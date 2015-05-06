@@ -92,67 +92,72 @@ app.get('/user/:id', function(req, res) {
         ig.getRecentMediaByUser(userid,{
         count: '10' //change count here 
         }).then(function(httpResponse) {
+
             var posts = httpResponse.data["data"];
             var captions = [];
-            posts.forEach(function(e){
-                if (e["caption"] != null)
+
+            posts.forEach(function(post){
+
+                var cap = post["caption"];
+                var text = post["caption"]["text"];
+                var tags = post["tags"];
+
+                if (cap != null && text != null && tags != null)
                 {
-                    if (e["caption"]["text"] != null)
+                    text = text.toLowerCase();
+                    tags.forEach(function(tag)
                     {
-                        if (e["tags"] != null)
-                        {
-                            ig_caption = e["caption"]["text"].toLowerCase();
-                            e["tags"].forEach(function(tag)
-                            {
-                                ig_caption = ig_caption.replace("#"+tag,"");
-                            });
-                        }
+                        text = text.replace("#"+tag,"");
+                    });
+                }
 
+                text = text.replace(/[.,!?;:"']/g,"").replace("  "," ");
+                text = text.split(" ");
 
-                        ig_caption = ig_caption.replace(/[.,!?;:"']/g,"");
-                        ig_caption = ig_caption.replace("  "," ");
-
-                        ig_caption = ig_caption.split(" ");
-                        ig_caption_new = [];
-                        ig_caption.forEach(function(ig_element){
-                            if (ig_element.length > 3)
-                            {
-                                if (ig_element[0]!="@")
-                                {
-                                    ig_caption_new.push(ig_element);
-                                }
-                            }
-                        });
-
-                              //Parse.Cloud.run("processKeys", {"captions":captions, "image":e["id"], "caption":ig_caption_new});
-                                var processKeys = new Parse.Query(WrdEntry);
-                                processKeys.containedIn("word",ig_caption_new);
-                                processKeys.find({
-                                  success: function(results) {
-                                        console.log(results);
-                                        captions.push({image:e["id"],caption:ig_caption_new,wordkeys:results});
-                                        userItem.set("captions",captions);
-                                        userItem.save(null, {
-                                            success: function(userItem) {
-                                                res.send(captions);
-                                                console.log("Success");
-                                            },
-                                            error: function(userItem, error) {
-                                                alert('Try another instagram account' + error.message);
-                                            }
-                                        });
-                                    },
-                                   error: function(error) {
-                                     console.log(error);
-
-                                   }
-                                });
-                        // captions.push({caption:ig_caption_new,hashs:e["tags"],image:e["images"]["standard_resolution"]["url"]})
-                     // captions.push({image:e["id"],caption:ig_caption_new,wordkeys:process_keys(ig_caption_new)});
+                wrdArray = [];
+                text.forEach(function(word){
+                    if (word.length > 3 && word[0]!="@")
+                    {
+                        wrdArray.push(word);
                     }
-                  }
+                });
+
+                post["words"] = wrdArray;
+
             });
 
+            posts.forEach(function(post,index){
+                var processKeys = new Parse.Query(WrdEntry);
+                var keys = [];
+
+                processKeys.containedIn("word",post["words"]);
+                processKeys.each(function(obj){
+                    // console.log("========="+obj.id);
+                    keys.push(obj.id);
+                    index++;
+                    //assemble caption array element
+
+                }).then(function(obj) {
+                    // console.log(keys);
+                    if (post["words"].length !== 0)
+                    {
+                        captions.push({image:post["id"],caption:post["words"],wordkeys:keys});
+                    }
+                    if (index==9){
+                        //if last caption
+                        userItem.set("captions",captions);
+                        userItem.save(null, {
+                            success: function(userItem) {
+                                res.send(captions);
+                                console.log("Success");
+                            },
+                            error: function(userItem, error) {
+                                alert('Try another instagram account' + error.message);
+                            }
+                        });
+                    }
+                });
+            });
         },
         function(error) {
         console.log(error);
