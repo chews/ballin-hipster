@@ -15,21 +15,21 @@ Parse.Cloud.beforeSave("Chat", function(request, response){
 
 
 
-Parse.Cloud.afterSave("Chat", function(request) {
-    var jsn = request.object.get("message")
-    console.log('=================================' + jsn)
+// Parse.Cloud.afterSave("Chat", function(request) {
+//     var jsn = request.object.get("message")
+//     console.log('=================================' + jsn)
 
-    Parse.Cloud.httpRequest({
-        method: 'POST',
-        url: FIREBASE_URL + '/chat.json',
-        body: '{"test":"complete"}'
-    }).then(function(httpResponse) {
-        console.log('Success!');
-    },
-    function(httpResponse) {
-        console.error('Request failed with response code ' + httpResponse.status);
-    });
-});
+//     Parse.Cloud.httpRequest({
+//         method: 'POST',
+//         url: FIREBASE_URL + '/chat.json',
+//         body: '{"test":"complete"}'
+//     }).then(function(httpResponse) {
+//         console.log('Success!');
+//     },
+//     function(httpResponse) {
+//         console.error('Request failed with response code ' + httpResponse.status);
+//     });
+// });
 
 
 
@@ -42,32 +42,16 @@ var UserItem = Parse.Object.extend("IgUser");
 var WrdEntry = Parse.Object.extend("WrdEntry");
 
 
-function process_keys(captions, IgUser){
-    var query = new Parse.Query(WrdEntry);
-    query.containedIn("word",captions);
-    returnArr = []
-    query.each(function(obj){
-        returnArr.push(obj.id);
-        console.log(obj.id)
-    }).then(function(obj){
-        console.log("done")
-    });
-}
+// Parse.Cloud.define("processKeys", function(request, response) {
 
-// Parse.Cloud.afterSave("IgUser", function(request,response) {
-
-//     var posts = request.object.get("captions");
-
-
-//     posts.forEach(function(image)
-//     {
-//         if (i == posts.length-1){
-//             request.object.save();
-//         }
-
-
-//         image["wrdkey"] = process_keys(image["caption"]);
-
+  
+//     returnArr = [];
+//     query.each(function(obj){
+//         returnArr.push(obj.id);
+//         console.log(obj.id);
+//     }).then(function(obj){
+//         return returnArr;
+//         console.log("done")
 //     });
 // });
 
@@ -77,13 +61,13 @@ function process_keys(captions, IgUser){
 // Attach request handlers to routes
 app.get('/user/:id', function(req, res) {
   // GET http://example.parseapp.com/test?message=hello
-	ig.searchUser({
-	q: req.params.id,
-	count: '1'
-	}).then(function(httpResponse) {
+    ig.searchUser({
+    q: req.params.id,
+    count: '1'
+    }).then(function(httpResponse) {
         var userItem;
 
-		userid = httpResponse.data["data"][0]["id"]
+        userid = httpResponse.data["data"][0]["id"]
 
         var query = new Parse.Query(UserItem);
         query.equalTo("userid",userid);
@@ -107,12 +91,12 @@ app.get('/user/:id', function(req, res) {
         });
 
 
-		ig.getRecentMediaByUser(userid,{
-		count: '10' //change count here 
-		}).then(function(httpResponse) {
-			var posts = httpResponse.data["data"];
-			var captions = [];
-			posts.forEach(function(e){
+        ig.getRecentMediaByUser(userid,{
+        count: '10' //change count here 
+        }).then(function(httpResponse) {
+            var posts = httpResponse.data["data"];
+            var captions = [];
+            posts.forEach(function(e){
                 if (e["caption"] != null)
                 {
                     if (e["caption"]["text"] != null)
@@ -142,33 +126,43 @@ app.get('/user/:id', function(req, res) {
                             }
                         });
 
+                      //Parse.Cloud.run("processKeys", {"captions":captions, "image":e["id"], "caption":ig_caption_new});
+                        var queryTwo = new Parse.Query(WrdEntry);
+                        queryTwo.containedIn("word",ig_caption_new);
+                        queryTwo.find({
+                          success: function(results) {
+                                captions.push({image:e["id"],caption:ig_caption_new,wordkeys:results});
+                                userItem.set("captions",captions);
+                                userItem.save(null, {
+                                    success: function(userItem) {
+                                        res.send(captions);
+                                        console.log("Success");
+                                    },
+                                    error: function(userItem, error) {
+                                        alert('Try another instagram account' + error.message);
+                                    }
+                                });
+                            },
+                           error: function(error) {
+                             console.log(error);
 
-				        // captions.push({caption:ig_caption_new,hashs:e["tags"],image:e["images"]["standard_resolution"]["url"]})
-			            captions.push({image:e["id"],caption:ig_caption_new,wordkeys:process_keys(ig_caption_new)});
+                           }
+                        });
+                  
+                        // captions.push({caption:ig_caption_new,hashs:e["tags"],image:e["images"]["standard_resolution"]["url"]})
+                     // captions.push({image:e["id"],caption:ig_caption_new,wordkeys:process_keys(ig_caption_new)});
                     }
-                }
-            });
-            userItem.set("captions",captions);
-            userItem.save(null, {
-                success: function(userItem) {
-                    console.log("Success");
-                },
-                error: function(userItem, error) {
-                    alert('Try another instagram account' + error.message);
-                }
+                  }
             });
 
-
-            res.send(captions);
-
-		},
-		function(error) {
-		console.log(error);
-		});
-	},
-	function(error) {
-	console.log(error);
-	});
+        },
+        function(error) {
+        console.log(error);
+        });
+    },
+    function(error) {
+    console.log(error);
+    });
 
 });
 
