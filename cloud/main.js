@@ -16,73 +16,24 @@ var UserItem = Parse.Object.extend("IgUser");
 var WrdEntry = Parse.Object.extend("WrdEntry");
 var TriadScore = Parse.Object.extend("TriadScore");
 
+var userItem;
 
 // Attach request handlers to routes
 app.get('/user/:id', function(req, res) {
+
+    var triadScore = new TriadScore();
+    var query = new Parse.Query(TriadScore);
     
-    // var triadScore = new TriadScore();
-    // var processRows = new Parse.Query(WrdEntry);
-    // processRows.find("combos");
-    // processRows.forEach(function(combo){
-    //     for(var i = 0; i < combo.length; i++)
-    //     {
-    //         var triad = combo[i];
-    //         var processCombos = new Parse.Query(WrdEntry);
-    //         processCombos.containedIn("combos", triad);
-    //         processCombos.forEach(function(found)
-    //         {
-    //             triadScore.set("triad", triad);
-    //             triadScore.increment(score);
-    //             triadScore.save();
-    //         });
-    //     }
-    // });
-
-        // processWords.forEach(function(combination){
-        //     var processTriads = new Parse.Query(WrdEntry);
-        //     // processTriads.containedIn("combination",)
-        //     [processTriads whereKey:@"combination" equalTo:triad];
-        //     processTriads.forEach(function(word)
-        //     {
-        //         triadScore.set("triad", triad);
-        //         triadScore.increment("score");
-        //         triadScore.save();
-
-
-        //     });
-        // });
-
 
     ig.searchUser({
     q: req.params.id,
     count: '1'
     }).then(function(httpResponse) {
 
-        var userItem;
-
         userid = httpResponse.data["data"][0]["id"];
         igusername = httpResponse.data["data"][0]["username"];
 
-        var query = new Parse.Query(UserItem);
-        query.equalTo("userid",userid);
-        query.first({
-            success: function(object)
-            {
-                if (typeof(object)=="undefined") // new object so we save it. 
-                {
-                    userItem = new UserItem();
-                    userItem.set("userid", userid);
-                    userItem.set("igusername", igusername);
-                }  
-                else 
-                {
-                    userItem = object;
-                }
-            },
-            error: function(error) {
-                console.log("no item found");
-            }
-        });
+        makeUser(userid,igusername);
 
 
         var postCount = 10;
@@ -156,6 +107,32 @@ app.post('/process_user', function(req, res) {
 // Attach the Express app to your Cloud Code
 app.listen();
 
+
+function makeUser(userid, username)
+{
+    var query = new Parse.Query(UserItem);
+    query.equalTo("userid",userid);
+    query.first({
+        success: function(object)
+        {
+            if (typeof(object)=="undefined") // new object so we save it. 
+            {
+                userItem = new UserItem();
+                userItem.set("userid", userid);
+                userItem.set("igusername", igusername);
+            }  
+            else 
+            {
+                userItem = object;
+            }
+        },
+        error: function(error) {
+            console.log("no item found");
+        }
+    });
+    return userItem;
+
+}
 
 function cleanPost(post)
 {
