@@ -21,89 +21,58 @@ Parse.Cloud.define("userInitiation", function(request, response) {
     query.equalTo("username",username);
 
     query.first({
-        success: function(userRetrieved) {
-            var user;
-            if (typeof(userRetrieved) == "undefined") {
-                var userid = validateIgAccount(username);
-
-                if (userid == null) {
-                    response.error("Not a valid Ig Account. ");
-                }
-
+        success: function(user) {
+            if (typeof(user) == "undefined") {
                 var user  = new Parse.User();
+                var userid; 
 
-                user.set("username", username);
-                user.set("password", "gen");
-                user.set("userid", userid);
+                ig.searchUser({
+                    q: username,
+                    count: '1'
+                }).then(function(httpResponse) {
+                    if (httpResponse.data["data"][0]) {
+                        userid = httpResponse.data["data"][0]["id"];
+                    } 
 
-                user.signUp(null, {
-                    success: function(gameUser) {
-                        return gameUser;
-                    },
-                    error: function(error) {
-                        response.error("Failed to create user. ");
+                    if (userid != null) {
+                        user.set("username", username);
+                        user.set("password", "gen");
+                        user.set("userid", userid);
+
+                        user.signUp(null, {
+                            success: function(user) {
+                                response.success(user);
+                            },
+                            error: function(error) {
+                                response.error("SIGN UP FAILURE. ");
+                            }
+                        });
+                    } else {
+                        response.error("INVALID.")
                     }
+
+                }, function (error) {
+                    response.error("IG USER SEARCH FAILURE.");
                 });
 
             } else {
-                user = userRetrieved;
+                response.success(user);
             }
-            response.success(user);
-
         },
         error: function(error) {
-            response.error("Error querying the database. " + error.message);
+            response.error("USER DATABASE QUERY FAILURE. " );
         }
     });
 });
+
 
 Parse.Cloud.define("userLogin", function(request, response) {
 
     var currUser = request.user;
 
-    var postWords = cleanIgPosts(currUser.get("userid"));
-
-    var keys, words, triads = validateWords(postWords, request);
-
-
-    currUser.save({
-        keys: keys,
-        words: words,
-        triads: triads
-    }, {
-        success: function(currUser) {
-            response.success("Successfully logged in user.");
-        },
-        error: function(currUser, error) {
-            response.error("Error to login user.");
-        }
-    });
-});
-
-
-function validateWords(postWords, response) {
-    var wordDictionary = new Parse.Query(WrdEntry);
-    var keys = [];
-    var words = [];
-    var triads = [];
-
-    wordDictionary.containedIn("word", postWords);
-
-    wordDictionary.each(function(word) {
-        keys.push(word.id);
-        words.push(word.get("word"));
-        word.get("combos").forEach(function(combo) {
-            words.push(combo);
-        });
-    });
-
-    return keys, words, triads;
-}
-
-function cleanIgPosts(id) {
     var postWords = [];
 
-    ig.getRecentMediaByUser(id, {
+    ig.getRecentMediaByUser(currUser.get("userid"), {
         count: POST_COUNT
     }).then(function(httpResponse) {
         var posts = httpResponse.data["data"];
@@ -115,27 +84,44 @@ function cleanIgPosts(id) {
                 });
             }
         });
-    });
-    return postWords;
-}
 
+        var wordDictionary = new Parse.Query(WrdEntry);
+        var keys = [];
+        var words = [];
+        var triads = [];
 
-function validateIgAccount(username) {
-    var userid;
-    console.log("=========== LOOKING FOR HTTP");
-    ig.searchUser({
-        q: username,
-        count: '1'
-    }).then(function(httpResponse) {
-        console.log(httpResponse.data);
-        if (httpResponse.data["data"][0]) {
-            userid = httpResponse.data["data"][0]["id"];
-        } else {
-            userid = null;
-        }
+        wordDictionary.containedIn("word", postWords);
+
+        wordDictionary.each(function(word) {
+            keys.push(word.id);
+            words.push(word.get("word"));
+            word.get("combos").forEach(function(combo) {
+                triads.push(combo);
+            });
+        }, {
+            success: function(success) {
+                currUser.save({
+                    keys: keys,
+                    words: words,
+                    triads: triads
+                }).then(function(user) {
+                        response.success(triads);
+                    },
+                    function(error) {
+                        response.error("SAVE GAME WORDS FAILURE.");
+                    }
+                );
+            }, 
+            error: function(error) {
+               response.error("DICTIONARY QUERY FAILURE.");
+            }
+        });
+
+    }, function (error) {
+        response.error("RECENT MEDIA CALL FAILURE.");
     });
-    return userid;
-}
+});
+
 
 /*This function will parse out words under 4 letters
 and other nonsense folks use in their captions.*/
