@@ -82,24 +82,21 @@ Parse.Cloud.define("userLogin", function(request, response) {
         });
 
         var wordDictionary = new Parse.Query(WrdEntry);
-        var keys = [];
-        var words = [];
+
+        var gameWords = [];
         var triads = [];
 
         wordDictionary.containedIn("word", postWords);
 
         wordDictionary.each(function(word) {
-            keys.push(word.id);
-            words.push(word.get("word"));
             word.get("combos").forEach(function(combo) {
                 triads.push(combo);
             });
+            gameWords.push([word.id, word.get("word"), triads]);
         }, {
             success: function(success) {
                 currUser.save({
-                    keys: keys,
-                    words: words,
-                    triads: triads
+                    gameWords: gameWords
                 }).then(function(user) {
                         response.success(triads);
                     },
