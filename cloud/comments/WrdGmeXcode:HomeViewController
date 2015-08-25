@@ -1,0 +1,71 @@
+//
+//  HomeViewController.m
+//  WrdGme
+//
+//  Copyright (c) 2015 Genevieve L'Esperance. All rights reserved.
+//
+
+#import <Foundation/Foundation.h>
+#import "HomeViewController.h"
+#import "GameViewController.h"
+#import <Parse/Parse.h>
+
+
+@interface HomeViewController ()
+@property (weak, nonatomic) IBOutlet UILabel *loginComments;
+@property (strong, nonatomic) NSArray *wrdCombos;
+
+@end
+
+@implementation HomeViewController
+@synthesize loginField;
+
+
+- (void)viewDidAppear:(BOOL)animated {
+    [self.loginComments setText:@""];
+}
+
+- (BOOL)textFieldShouldReturn:(UITextField *)textField
+{
+    [self userInitiation:textField.text];
+    return YES;
+}
+
+- (void)gameLogin
+{
+    [PFCloud callFunctionInBackground:@"userLogin"
+                       withParameters:@{}
+                                block:^(PFObject *object, NSError *error){
+                                    self.wrdCombos = (NSArray *) object;
+                                    }];
+}
+
+- (void)userLogin:(NSString *)username
+{
+    [PFUser logInWithUsernameInBackground:username
+                                 password:@"gen"
+                                    block:^(PFUser *user, NSError *error) {
+                                        [self gameLogin];
+                                    }];
+}
+
+- (void)userInitiation:(NSString*)username
+{
+    [PFCloud callFunctionInBackground:@"userInitiation"
+                       withParameters:@{@"username":username}
+                                block:^(PFObject *object, NSError *error) {
+                                    
+                                    [self userLogin:username];
+                                    }];
+
+}
+
+
+-(void)updateComment:(NSString *)comment
+{
+    [self.loginComments setText:comment];
+}
+
+
+
+@end

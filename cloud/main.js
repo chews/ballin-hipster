@@ -1,14 +1,9 @@
 var ig = require('cloud/instagram-v1-1.0.js');
 
-
 ig.initialize('e098fc55f76442deaf8057c0fcaeeb76');
 ig.setAccessToken('261345369.dc8bd7d.d743823297444ed1acc38b9b0e1f5ef2');
 
-//var FIREBASE_URL = 'https://apis.firebaseio.com';
-
-
 var WrdEntry = Parse.Object.extend("WrdEntry");
-//var TriadScore = Parse.Object.extend("TriadScore");
 
 var POST_COUNT = 10;
 
@@ -23,13 +18,14 @@ Parse.Cloud.define("userInitiation", function(request, response) {
     query.first({
         success: function(user) {
             if (typeof(user) == "undefined") {
-                var user  = new Parse.User();
-                var userid; 
-
                 ig.searchUser({
                     q: username,
                     count: '1'
                 }).then(function(httpResponse) {
+                    var user  = new Parse.User();
+
+                    var userid; 
+
                     if (httpResponse.data["data"][0]) {
                         userid = httpResponse.data["data"][0]["id"];
                     } 
@@ -44,15 +40,15 @@ Parse.Cloud.define("userInitiation", function(request, response) {
                                 response.success(user);
                             },
                             error: function(error) {
-                                response.error("SIGN UP FAILURE. ");
+                                response.error("ERROR: USER SIGN UP.");
                             }
                         });
                     } else {
-                        response.error("INVALID.")
+                        response.error("ERROR: INSTAGRAM USER ID IS INVALID.")
                     }
 
                 }, function (error) {
-                    response.error("IG USER SEARCH FAILURE.");
+                    response.error("ERROR: INSTAGRAM USER SEARCH.");
                 });
 
             } else {
@@ -60,7 +56,7 @@ Parse.Cloud.define("userInitiation", function(request, response) {
             }
         },
         error: function(error) {
-            response.error("USER DATABASE QUERY FAILURE. " );
+            response.error("ERROR: USER DATABASE QUERY.");
         }
     });
 });
@@ -108,17 +104,17 @@ Parse.Cloud.define("userLogin", function(request, response) {
                         response.success(triads);
                     },
                     function(error) {
-                        response.error("SAVE GAME WORDS FAILURE.");
+                        response.error("ERROR: SAVE CURRENT USER GAME WORDS.");
                     }
                 );
             }, 
             error: function(error) {
-               response.error("DICTIONARY QUERY FAILURE.");
+               response.error("ERROR: WORD DICTIONARY QUERY.");
             }
         });
 
     }, function (error) {
-        response.error("RECENT MEDIA CALL FAILURE.");
+        response.error("ERROR: INSTAGRAM RECENT MEDIA PULL.");
     });
 });
 
