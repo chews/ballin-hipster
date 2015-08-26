@@ -43,7 +43,14 @@
         {
             self.currTriads = (NSArray *) [[word firstObject] objectForKey:@"combos"];
             self.currWord = (NSString *) [[word firstObject] objectForKey:@"word"];
-            [self performSegueWithIdentifier:@"toGame" sender:self];
+            
+            GameViewController *gvc = [[GameViewController alloc] init];
+            UIStoryboard *storyboard = [UIStoryboard storyboardWithName:@"Main" bundle:nil];
+            gvc = (GameViewController *)[storyboard instantiateViewControllerWithIdentifier:@"GameViewControllerStoryboardID"];
+            gvc.currTriads = self.currTriads;
+            gvc.currWord = self.currWord;
+            [[self navigationController] pushViewController:gvc animated:YES];
+            
         }];
 //                                    [PFUser logOut];
     }
@@ -54,8 +61,15 @@
     [PFCloud callFunctionInBackground:@"userLogin"
                        withParameters:@{}
                                 block:^(PFObject *object, NSError *error){
-                                    self.currTriads = (NSArray *) object;
-                                    [self retrieveTriadsForWord];
+                                    if (error != nil)
+                                    {
+                                        [self.loginComments setText:@"Is your account private?"];
+                                    }
+                                    else
+                                    {
+                                        self.currTriads = (NSArray *) object;
+                                        [self retrieveTriadsForWord];
+                                    }
                                     }];
 }
 
@@ -65,6 +79,7 @@
                                  password:@"gen"
                                     block:^(PFUser *user, NSError *error) {
                                         [self gameLogin];
+                                        
                                     }];
 }
 
@@ -73,8 +88,14 @@
     [PFCloud callFunctionInBackground:@"userInitiation"
                        withParameters:@{@"username":username}
                                 block:^(PFObject *object, NSError *error) {
-                                    
-                                    [self userLogin:username];
+                                    if (error != nil)
+                                    {
+                                        [self.loginComments setText:@"Try a real account!"];
+                                    }
+                                    else
+                                    {
+                                        [self userLogin:username];
+                                    }
                                     }];
 
 }
