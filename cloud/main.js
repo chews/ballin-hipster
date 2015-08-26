@@ -76,7 +76,9 @@ Parse.Cloud.define("userLogin", function(request, response) {
             post = cleanPost(post);
             if (post["words"].length != 0) {
                 post["words"].forEach(function(word) {
-                    postWords.push(word);
+                    if (postWords.indexOf(word) <= -1) {
+                        postWords.push(word);
+                    }
                 });
             }
         });
@@ -84,24 +86,24 @@ Parse.Cloud.define("userLogin", function(request, response) {
         var wordDictionary = new Parse.Query(WrdEntry);
 
         var gameWords = [];
-        var triads = [];
+        // var triads = [];
 
         wordDictionary.containedIn("word", postWords);
 
         wordDictionary.each(function(word) {
-            word.get("combos").forEach(function(combo) {
-                triads.push(combo);
-            });
-            gameWords.push([word.id, word.get("word"), triads]);
+            // word.get("combos").forEach(function(combo) {
+            //     triads.push(combo);
+            // });
+            gameWords.push(word.id);
         }, {
             success: function(success) {
                 currUser.save({
                     gameWords: gameWords
                 }).then(function(user) {
-                        response.success(triads);
+                        response.success(gameWords);
                     },
                     function(error) {
-                        response.error("ERROR: SAVE CURRENT USER GAME WORDS.");
+                        response.error("ERROR: SAVE CURRENT USER GAME WORDS. " + error.code + " " + error.message);
                     }
                 );
             }, 
@@ -112,6 +114,29 @@ Parse.Cloud.define("userLogin", function(request, response) {
 
     }, function (error) {
         response.error("ERROR: INSTAGRAM RECENT MEDIA PULL.");
+    });
+});
+
+Parse.Cloud.define("retrieveTriads", function(request,response) {
+    var currUser = request.user;
+    var wordDictionary = new Parse.Query(WrdEntry);
+    var triads = [];
+
+    wordDictionary.containedIn("objectId", request.params.triadId);
+
+    console.log(wordDictionary);
+
+    wordDictionary.each(function(word) {
+        word.get("combos").forEach(function(combo) {
+            triads.push(combo);
+        });
+    }, {
+        success: function(success) {
+            response.success(triads);
+        },
+        error: function(error) {
+            response.error("ERROR: RETURNING TRIAD FOR WORD ID. " + error.code + " " + error.message);
+        }
     });
 });
 
