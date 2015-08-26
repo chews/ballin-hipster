@@ -5,7 +5,17 @@ ig.setAccessToken('261345369.dc8bd7d.d743823297444ed1acc38b9b0e1f5ef2');
 
 var WrdEntry = Parse.Object.extend("WrdEntry");
 
+var TriadScore = Parse.Object.extend("TriadScore");
+
 var POST_COUNT = 10;
+
+
+Parse.Cloud.define("scoreTriads", function(request, response) {
+    //248K words in dictionary
+    //Score each word by: 
+    //  Frequency of appearance? Or lack thereof
+    //  Length of word, i.e. +1 for every letter after 4
+});
 
 
 Parse.Cloud.define("userInitiation", function(request, response) {
@@ -30,10 +40,13 @@ Parse.Cloud.define("userInitiation", function(request, response) {
                         userid = httpResponse.data["data"][0]["id"];
                     } 
 
+                    console.log(httpResponse.data);
+
                     if (userid != null) {
                         user.set("username", username);
                         user.set("password", "gen");
                         user.set("userid", userid);
+                        user.set("score", 0);
 
                         user.signUp(null, {
                             success: function(user) {
@@ -61,7 +74,6 @@ Parse.Cloud.define("userInitiation", function(request, response) {
     });
 });
 
-
 Parse.Cloud.define("userLogin", function(request, response) {
 
     var currUser = request.user;
@@ -86,14 +98,10 @@ Parse.Cloud.define("userLogin", function(request, response) {
         var wordDictionary = new Parse.Query(WrdEntry);
 
         var gameWords = [];
-        // var triads = [];
 
         wordDictionary.containedIn("word", postWords);
 
         wordDictionary.each(function(word) {
-            // word.get("combos").forEach(function(combo) {
-            //     triads.push(combo);
-            // });
             gameWords.push(word.id);
         }, {
             success: function(success) {
@@ -103,21 +111,22 @@ Parse.Cloud.define("userLogin", function(request, response) {
                         response.success(gameWords);
                     },
                     function(error) {
+                        //Limit number of game words if > 128 kb
                         response.error("ERROR: SAVE CURRENT USER GAME WORDS. " + error.code + " " + error.message);
                     }
                 );
             }, 
             error: function(error) {
-               response.error("ERROR: WORD DICTIONARY QUERY.");
+               response.error("ERROR: WORD DICTIONARY QUERY. ");
             }
         });
 
     }, function (error) {
-        response.error("ERROR: INSTAGRAM RECENT MEDIA PULL.");
+        response.error("ERROR: INSTAGRAM RECENT MEDIA PULL. ");
     });
 });
 
-Parse.Cloud.define("retrieveTriads", function(request,response) {
+Parse.Cloud.define("retrieveTriadForWord", function(request,response) {
     var currUser = request.user;
     var wordDictionary = new Parse.Query(WrdEntry);
     var triads = [];
