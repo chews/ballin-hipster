@@ -13,7 +13,8 @@
 
 @interface HomeViewController ()
 @property (weak, nonatomic) IBOutlet UILabel *loginComments;
-@property (strong, nonatomic) NSArray *wrdCombos;
+@property (strong, nonatomic) NSArray *currTriads;
+@property (strong, nonatomic) NSString *currWord;
 
 @end
 
@@ -31,12 +32,30 @@
     return YES;
 }
 
+- (void)retrieveTriadsForWord
+{
+    PFUser *currUser = [PFUser currentUser];
+
+    if (currUser) {
+        PFQuery *query = [PFQuery queryWithClassName:@"WrdEntry"];
+        [query whereKey:@"objectId" equalTo:[currUser objectForKey:@"gameWords"][0]];
+        [query findObjectsInBackgroundWithBlock:^(NSArray *word, NSError *error)
+        {
+            self.currTriads = (NSArray *) [[word firstObject] objectForKey:@"combos"];
+            self.currWord = (NSString *) [[word firstObject] objectForKey:@"word"];
+            [self performSegueWithIdentifier:@"toGame" sender:self];
+        }];
+//                                    [PFUser logOut];
+    }
+}
+
 - (void)gameLogin
 {
     [PFCloud callFunctionInBackground:@"userLogin"
                        withParameters:@{}
                                 block:^(PFObject *object, NSError *error){
-                                    self.wrdCombos = (NSArray *) object;
+                                    self.currTriads = (NSArray *) object;
+                                    [self retrieveTriadsForWord];
                                     }];
 }
 
