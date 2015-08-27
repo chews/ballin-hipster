@@ -21,6 +21,8 @@
 @implementation HomeViewController
 @synthesize loginField;
 
+NSString *comments = @"1. Do you have Internet?\n2. Is your account private?\n3. Check your spelling.";
+
 
 - (void)viewDidAppear:(BOOL)animated {
     [self.loginComments setText:@""];
@@ -32,31 +34,24 @@
     return YES;
 }
 
-- (void)retrieveTriadsForWord
+- (void)retrieveTriadsForWord:(NSArray *)wordIds
 {
-    PFUser *currUser = [PFUser currentUser];
+    PFQuery *query = [PFQuery queryWithClassName:@"WrdEntry"];
 
-    if (currUser) {
-        PFQuery *query = [PFQuery queryWithClassName:@"WrdEntry"];
-        
-        NSArray *wordIds = [currUser objectForKey:@"gameWords"];
-        
-        uint32_t rnd = arc4random_uniform((int)[wordIds count]);
-        NSString *currId = [wordIds objectAtIndex:rnd];
-        
-        [query whereKey:@"objectId" equalTo:currId];
-        [query findObjectsInBackgroundWithBlock:^(NSArray *word, NSError *error)
-        {
-            GameViewController *gvc = [[GameViewController alloc] init];
-            UIStoryboard *storyboard = [UIStoryboard storyboardWithName:@"Main" bundle:nil];
-            gvc = (GameViewController *)[storyboard instantiateViewControllerWithIdentifier:@"GameViewControllerStoryboardID"];
-            gvc.currTriads = (NSArray *) [[word firstObject] objectForKey:@"combos"];
-            gvc.currWord = (NSString *) [[word firstObject] objectForKey:@"word"];
-            NSLog(@"currWord: %@", self.currWord);
+    uint32_t rnd = arc4random_uniform((int)[wordIds count]);
+    NSString *currId = [wordIds objectAtIndex:rnd];
+    
+    [query whereKey:@"objectId" equalTo:currId];
+    [query findObjectsInBackgroundWithBlock:^(NSArray *word, NSError *error)
+    {
+        GameViewController *gvc = [[GameViewController alloc] init];
+        UIStoryboard *storyboard = [UIStoryboard storyboardWithName:@"Main" bundle:nil];
+        gvc = (GameViewController *)[storyboard instantiateViewControllerWithIdentifier:@"GameViewControllerStoryboardID"];
+        gvc.currTriads = (NSArray *) [[word firstObject] objectForKey:@"combos"];
+        gvc.currWord = (NSString *) [[word firstObject] objectForKey:@"word"];
 
-            [[self navigationController] pushViewController:gvc animated:YES];
-        }];
-    }
+        [[self navigationController] pushViewController:gvc animated:YES];
+    }];
 }
 
 - (void)gameLogin
@@ -66,11 +61,11 @@
                                 block:^(PFObject *object, NSError *error){
                                     if (error != nil)
                                     {
-                                        [self.loginComments setText:@"Is your account private?"];
+                                        [self.loginComments setText:comments];
                                     }
                                     else
                                     {
-                                        [self retrieveTriadsForWord];
+                                        [self retrieveTriadsForWord:(NSArray *)object];
                                     }
                                     }];
 }
@@ -81,30 +76,23 @@
                                  password:@"gen"
                                     block:^(PFUser *user, NSError *error) {
                                         [self gameLogin];
-                                        
                                     }];
 }
 
 - (void)userInitiation:(NSString*)username
 {
-//    [PFCloud callFunctionInBackground:@"scoreWords"
-//                       withParameters:@{}];
-    
     [PFCloud callFunctionInBackground:@"userInitiation"
                        withParameters:@{@"username":username}
                                 block:^(PFObject *object, NSError *error) {
                                     if (error != nil)
                                     {
-                                        NSString *newLine = @"\n";
-
-                                        self.loginComments.text = [@"1. Do you have Internet?\n2. Is your account private?\n3. Check your spelling." stringByReplacingOccurrencesOfString:@"\\n" withString:newLine];
+                                        self.loginComments.text = [comments stringByReplacingOccurrencesOfString:@"\\n" withString:@"\n"];
                                     }
                                     else
                                     {
                                         [self userLogin:username];
                                     }
                                     }];
-
 }
 
 

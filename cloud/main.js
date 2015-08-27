@@ -45,9 +45,9 @@ Parse.Cloud.define("userInitiation", function(request, response) {
                 }).then(function(httpResponse) {
                     var userid; 
 
-                    var data = httpResponse.data["data"];
-                    if (data[0] && data[1]) {
-                        userid = data[0]["id"];
+                    var data = httpResponse.data["data"][0];
+                    if (data) {
+                        userid = data["id"];
                     } 
 
                     if (userid != null) {
@@ -67,7 +67,7 @@ Parse.Cloud.define("userInitiation", function(request, response) {
                             }
                         });
                     } else {
-                        response.error("ERROR: INSTAGRAM USER ID IS INVALID.")
+                        response.error("ERROR: INSTAGRAM USER ID IS INVALID OR USER PRIVATE.")
                     }
 
                 }, function (error) {

@@ -50,7 +50,18 @@ int *score;
     if ([self.currWord isEqualToString:testWord])
     {
         [self.wordField setTextColor:[UIColor greenColor]];
-        [self retrieveNextTriad];
+        [PFCloud callFunctionInBackground:@"wordComplexity"
+                           withParameters:@{@"word":self.currWord}
+                                    block:^(PFObject *object, NSError *error) {
+                                
+                                        NSNumber *complexity = (NSNumber *) object;
+                                        PFUser *currUser = [PFUser currentUser];
+                                        [currUser incrementKey:@"score"
+                                                      byAmount:complexity];
+                                        [currUser saveInBackground];
+                                        [self updateScore];
+                                        [self retrieveNextTriad];
+        }];
     }
     else
     {
@@ -62,11 +73,7 @@ int *score;
 - (void)retrieveNextTriad
 {
     PFUser *currUser = [PFUser currentUser];
-    
-    [currUser incrementKey:@"score"];
-    [currUser saveInBackground];
-    [self updateScore];
-    
+
     if (currUser) {
         
         PFQuery *query = [PFQuery queryWithClassName:@"WrdEntry"];
