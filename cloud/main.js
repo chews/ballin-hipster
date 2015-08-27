@@ -10,11 +10,37 @@ var TriadScore = Parse.Object.extend("TriadScore");
 var POST_COUNT = 10;
 
 
-Parse.Cloud.define("scoreTriads", function(request, response) {
+Parse.Cloud.define("scoreWords", function(request, response) {
     //248K words in dictionary
     //Score each word by: 
     //  Frequency of appearance? Or lack thereof
     //  Length of word, i.e. +1 for every letter after 4
+    var wordScores = [];
+
+    var wordDictionary = new Parse.Query("WrdEntry");
+
+    wordDictionary.each(function(wordEntry) {
+        var word = wordEntry.get("word")
+        var points = word.length - 3;
+        var complexity = points;
+
+        var triadScore = new TriadScore();
+
+        triadScore.set("wordId", wordEntry.id);
+        triadScore.set("word", word);
+        triadScore.set("complexity", complexity);
+
+        wordScores.push(triadScore);
+    },
+    {
+        success: function(result) {
+            //Save all wordScores
+            response.success("Success");
+        },
+        error: function() {
+            response.error("ERROR: LOOPING THROUGH WORDENTRY.");
+        }
+    });
 });
 
 
@@ -126,7 +152,7 @@ Parse.Cloud.define("userLogin", function(request, response) {
     });
 });
 
-Parse.Cloud.define("retrieveTriadForWord", function(request,response) {
+Parse.Cloud.define("retrieveTriadsForWord", function(request,response) {
     var currUser = request.user;
     var wordDictionary = new Parse.Query(WrdEntry);
     var triads = [];

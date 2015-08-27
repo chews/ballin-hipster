@@ -22,10 +22,6 @@
 
 int *score;
 
-- (void)updateScore
-{
-    [self.scoreLabel setText:[NSString stringWithFormat:@"%d",[[[PFUser currentUser] objectForKey:@"score"] intValue]]];
-}
 
 - (void) viewDidLoad
 {
@@ -42,6 +38,11 @@ int *score;
 {
     [self validateWord:textField.text];
     return YES;
+}
+
+- (void)updateScore
+{
+    [self.scoreLabel setText:[NSString stringWithFormat:@"%d",[[[PFUser currentUser] objectForKey:@"score"] intValue]]];
 }
 
 - (void)validateWord:(NSString*)testWord
@@ -63,6 +64,7 @@ int *score;
     PFUser *currUser = [PFUser currentUser];
     
     [currUser incrementKey:@"score"];
+    [currUser saveInBackground];
     [self updateScore];
     
     if (currUser) {

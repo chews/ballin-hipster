@@ -38,21 +38,24 @@
 
     if (currUser) {
         PFQuery *query = [PFQuery queryWithClassName:@"WrdEntry"];
-        [query whereKey:@"objectId" equalTo:[currUser objectForKey:@"gameWords"][0]];
+        
+        NSArray *wordIds = [currUser objectForKey:@"gameWords"];
+        
+        uint32_t rnd = arc4random_uniform((int)[wordIds count]);
+        NSString *currId = [wordIds objectAtIndex:rnd];
+        
+        [query whereKey:@"objectId" equalTo:currId];
         [query findObjectsInBackgroundWithBlock:^(NSArray *word, NSError *error)
         {
-            self.currTriads = (NSArray *) [[word firstObject] objectForKey:@"combos"];
-            self.currWord = (NSString *) [[word firstObject] objectForKey:@"word"];
-            
             GameViewController *gvc = [[GameViewController alloc] init];
             UIStoryboard *storyboard = [UIStoryboard storyboardWithName:@"Main" bundle:nil];
             gvc = (GameViewController *)[storyboard instantiateViewControllerWithIdentifier:@"GameViewControllerStoryboardID"];
-            gvc.currTriads = self.currTriads;
-            gvc.currWord = self.currWord;
+            gvc.currTriads = (NSArray *) [[word firstObject] objectForKey:@"combos"];
+            gvc.currWord = (NSString *) [[word firstObject] objectForKey:@"word"];
+            NSLog(@"currWord: %@", self.currWord);
+
             [[self navigationController] pushViewController:gvc animated:YES];
-            
         }];
-//                                    [PFUser logOut];
     }
 }
 
@@ -67,7 +70,6 @@
                                     }
                                     else
                                     {
-                                        self.currTriads = (NSArray *) object;
                                         [self retrieveTriadsForWord];
                                     }
                                     }];
@@ -85,12 +87,17 @@
 
 - (void)userInitiation:(NSString*)username
 {
+//    [PFCloud callFunctionInBackground:@"scoreWords"
+//                       withParameters:@{}];
+    
     [PFCloud callFunctionInBackground:@"userInitiation"
                        withParameters:@{@"username":username}
                                 block:^(PFObject *object, NSError *error) {
                                     if (error != nil)
                                     {
-                                        [self.loginComments setText:@"Try a real account!"];
+                                        NSString *newLine = @"\n";
+
+                                        self.loginComments.text = [@"1. Do you have Internet?\n2. Is your account private?\n3. Check your spelling." stringByReplacingOccurrencesOfString:@"\\n" withString:newLine];
                                     }
                                     else
                                     {
