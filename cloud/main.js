@@ -10,37 +10,22 @@ var TriadScore = Parse.Object.extend("TriadScore");
 var POST_COUNT = 10;
 
 
-Parse.Cloud.define("scoreWords", function(request, response) {
-    //248K words in dictionary
-    //Score each word by: 
-    //  Frequency of appearance? Or lack thereof
-    //  Length of word, i.e. +1 for every letter after 4
-    var wordScores = [];
+Parse.Cloud.define("wordComplexity", function(request, response) {
+    var word = request.params.word;
 
-    var wordDictionary = new Parse.Query("WrdEntry");
+    var wrdScoreQuery = new Parse.Query("WrdScore");
 
-    wordDictionary.each(function(wordEntry) {
-        var word = wordEntry.get("word")
-        var points = word.length - 3;
-        var complexity = points;
+    wrdScoreQuery.equalTo("word", word);
 
-        var triadScore = new TriadScore();
-
-        triadScore.set("wordId", wordEntry.id);
-        triadScore.set("word", word);
-        triadScore.set("complexity", complexity);
-
-        wordScores.push(triadScore);
-    },
-    {
-        success: function(result) {
-            //Save all wordScores
-            response.success("Success");
-        },
-        error: function() {
-            response.error("ERROR: LOOPING THROUGH WORDENTRY.");
+    wrdScoreQuery.first({
+        success: function(word) {
+            response.success(word.get("complexity"));
+        }, 
+        error: function(error) {
+            response.error("ERROR: QUERYING WRDSCORE TABLE FAILED.");
         }
     });
+
 });
 
 
