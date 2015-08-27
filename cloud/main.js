@@ -3,8 +3,8 @@ var ig = require('cloud/instagram-v1-1.0.js');
 ig.initialize('e098fc55f76442deaf8057c0fcaeeb76');
 ig.setAccessToken('261345369.dc8bd7d.d743823297444ed1acc38b9b0e1f5ef2');
 
+var Chat = Parse.Object.extend("Chat");
 var WrdEntry = Parse.Object.extend("WrdEntry");
-
 var TriadScore = Parse.Object.extend("TriadScore");
 
 var POST_COUNT = 10;
@@ -43,17 +43,15 @@ Parse.Cloud.define("userInitiation", function(request, response) {
                     q: username,
                     count: '1'
                 }).then(function(httpResponse) {
-                    var user  = new Parse.User();
-
                     var userid; 
 
                     if (httpResponse.data["data"][0]) {
                         userid = httpResponse.data["data"][0]["id"];
                     } 
 
-                    console.log(httpResponse.data);
-
                     if (userid != null) {
+                        var user  = new Parse.User();
+
                         user.set("username", username);
                         user.set("password", "gen");
                         user.set("userid", userid);
