@@ -45,8 +45,9 @@ Parse.Cloud.define("userInitiation", function(request, response) {
                 }).then(function(httpResponse) {
                     var userid; 
 
-                    if (httpResponse.data["data"][0]) {
-                        userid = httpResponse.data["data"][0]["id"];
+                    var data = httpResponse.data["data"];
+                    if (data[0] && data[1]) {
+                        userid = data[0]["id"];
                     } 
 
                     if (userid != null) {
